@@ -205,6 +205,7 @@ async def websocket_chat(
                 if data.get("type") == "message":
                     content = data.get("content", "")
                     model = data.get("model") or chat.model_preferences.get("default_model")
+                    service = data.get("service") or chat.model_preferences.get("default_service")
                     temperature = data.get("temperature", 0.7)
                     max_tokens = data.get("max_tokens")
                     
@@ -284,7 +285,8 @@ async def websocket_chat(
                             messages=context,
                             model=model,
                             temperature=temperature,
-                            max_tokens=max_tokens
+                            max_tokens=max_tokens,
+                            preferred_service=service
                         ):
                             full_response += chunk
                             tokens_used += 1

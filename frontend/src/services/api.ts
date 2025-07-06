@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { AuthResponse, Chat, LoginCredentials, Message, Model, User } from '../types';
+import { AuthResponse, Chat, LoginCredentials, Message, Model, ModelsResponse, User } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
@@ -188,8 +188,8 @@ class ApiService {
   }
 
   // Model endpoints
-  async getModels(): Promise<{ models: Model[]; default_model: string }> {
-    const response = await this.api.get<{ models: Model[]; default_model: string }>('/models');
+  async getModels(): Promise<ModelsResponse> {
+    const response = await this.api.get<ModelsResponse>('/models');
     return response.data;
   }
 

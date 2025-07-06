@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
@@ -13,54 +13,97 @@ router = APIRouter()
 
 class ModelInfo(BaseModel):
     name: str
+    service: str
+    service_type: str
     endpoint: str
     available: bool
+    is_default: bool
+
+
+class ServiceInfo(BaseModel):
+    name: str
+    type: str
+    url: str
+    default_model: str
+    models: List[str]
+    is_healthy: bool
+    is_default_service: bool
 
 
 class ModelsResponse(BaseModel):
+    services: List[ServiceInfo]
     models: List[ModelInfo]
+    default_service: str
     default_model: str
 
 
 class HealthResponse(BaseModel):
-    healthy_endpoints: int
-    total_endpoints: int
-    endpoints: List[dict]
+    healthy_services: int
+    total_services: int
+    default_service: str
+    default_model: str
+    services: List[dict]
 
 
 @router.get("", response_model=ModelsResponse)
 async def list_models(
     current_user: User = Depends(get_current_user)
 ):
-    """List all available models from all endpoints"""
+    """List all available models from all services"""
     llm_service = LLMService()
     
-    # Get models from all endpoints
-    all_models = await llm_service.list_models()
+    # Get models from all services
+    all_services = await llm_service.list_models()
+    
+    # Get health status for service availability
+    health_status = await llm_service.health_check()
+    health_by_name = {s["name"]: s["is_healthy"] for s in health_status["services"]}
     
     # Format response
+    services = []
     models = []
-    for endpoint, model_list in all_models.items():
-        for model_name in model_list:
+    
+    for service_name, service_info in all_services.items():
+        is_default_service = service_name == llm_service.default_service_name
+        
+        # Add service info
+        services.append(ServiceInfo(
+            name=service_name,
+            type=service_info["type"],
+            url=service_info["url"],
+            default_model=service_info["default_model"],
+            models=service_info["models"],
+            is_healthy=health_by_name.get(service_name, False),
+            is_default_service=is_default_service
+        ))
+        
+        # Add individual models
+        for model_name in service_info["models"]:
+            is_default = (is_default_service and model_name == llm_service.default_model)
             models.append(ModelInfo(
                 name=model_name,
-                endpoint=endpoint,
-                available=True
+                service=service_name,
+                service_type=service_info["type"],
+                endpoint=service_info["url"],
+                available=health_by_name.get(service_name, False),
+                is_default=is_default
             ))
     
-    # Sort models by name
-    models.sort(key=lambda x: x.name)
+    # Sort models by service and name
+    models.sort(key=lambda x: (x.service, x.name))
     
     # Get default model from user preferences or system default
-    default_model = (
+    user_default_model = (
         current_user.preferences.get("default_model") 
         if current_user.preferences 
         else None
-    ) or llm_service.default_model
+    )
     
     return ModelsResponse(
+        services=services,
         models=models,
-        default_model=default_model
+        default_service=llm_service.default_service_name or "",
+        default_model=user_default_model or llm_service.default_model or ""
     )
 
 

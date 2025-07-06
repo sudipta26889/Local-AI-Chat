@@ -41,8 +41,28 @@ export interface Attachment {
 
 export interface Model {
   name: string;
+  service: string;
+  service_type: string;
   endpoint: string;
   available: boolean;
+  is_default: boolean;
+}
+
+export interface Service {
+  name: string;
+  type: string;
+  url: string;
+  default_model: string;
+  models: string[];
+  is_healthy: boolean;
+  is_default_service: boolean;
+}
+
+export interface ModelsResponse {
+  services: Service[];
+  models: Model[];
+  default_service: string;
+  default_model: string;
 }
 
 export interface LoginCredentials {

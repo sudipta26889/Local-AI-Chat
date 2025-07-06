@@ -102,11 +102,12 @@ export class ChatWebSocket {
     }
   }
 
-  sendMessage(content: string, model?: string, temperature?: number, maxTokens?: number): void {
+  sendMessage(content: string, model?: string, temperature?: number, maxTokens?: number, service?: string): void {
     this.send({
       type: 'message',
       content,
       model,
+      service,
       temperature,
       max_tokens: maxTokens,
     });

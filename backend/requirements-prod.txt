@@ -1,0 +1,44 @@
+# Core
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# Authentication
+python-ldap==3.4.3
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+
+# Redis
+redis==5.0.1
+aioredis==2.0.1
+
+# HTTP Client for LLM
+httpx==0.25.2
+aiohttp==3.9.1
+
+# WebSocket
+websockets==12.0
+
+# Vector Database
+qdrant-client==1.7.0
+
+# Object Storage
+minio==7.2.0
+
+# Utilities
+pydantic==2.5.2
+pydantic-settings==2.1.0
+pendulum==2.1.2
+
+# Logging
+loguru==0.7.2
+
+# CORS
+fastapi-cors==0.0.6

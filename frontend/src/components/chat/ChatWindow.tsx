@@ -15,6 +15,7 @@ export const ChatWindow: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedService, setSelectedService] = useState<string>('');
   const [temperature, setTemperature] = useState(0.7);
   const wsRef = useRef<ChatWebSocket | null>(null);
   const streamingMessageRef = useRef<string>('');
@@ -38,6 +39,7 @@ export const ChatWindow: React.FC = () => {
       const data = await api.getChat(chatId);
       setChat(data);
       setSelectedModel(data.model_preferences.default_model || '');
+      setSelectedService(data.model_preferences.default_service || '');
     } catch (error) {
       toast.error('Failed to load chat');
     }
@@ -212,16 +214,23 @@ export const ChatWindow: React.FC = () => {
       return;
     }
 
-    wsRef.current.sendMessage(content, selectedModel, temperature);
+    wsRef.current.sendMessage(content, selectedModel, temperature, undefined, selectedService);
   };
 
-  const handleModelChange = async (model: string) => {
+  const handleModelChange = async (model: string, service?: string) => {
     setSelectedModel(model);
+    if (service) {
+      setSelectedService(service);
+    }
     
     if (chat && chatId) {
       try {
         await api.updateChat(chatId, {
-          model_preferences: { ...chat.model_preferences, default_model: model },
+          model_preferences: { 
+            ...chat.model_preferences, 
+            default_model: model,
+            default_service: service 
+          },
         });
       } catch (error) {
         console.error('Failed to update model preference:', error);
@@ -274,6 +283,7 @@ export const ChatWindow: React.FC = () => {
           <div className="flex items-center gap-4">
             <ModelSelector
               selectedModel={selectedModel}
+              selectedService={selectedService}
               onModelChange={handleModelChange}
             />
             <div className="flex items-center gap-2">

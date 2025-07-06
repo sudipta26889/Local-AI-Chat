@@ -102,4 +102,4 @@ htmlcov/
 
 # Local configuration
 local-config/
-portainer-stack.yml
+stack.env

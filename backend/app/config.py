@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic_settings import BaseSettings
 from pydantic import field_validator, Field
 
@@ -67,16 +67,53 @@ class Settings(BaseSettings):
     jwt_refresh_expiration_hours: int = 2160  # 90 days
     
     # LLM
-    llm_endpoints: str
-    default_model: str = "qwen2.5:32b-instruct"
+    llm_services: str
+    default_llm_service: str = "PC1_LMStudio|qwen/qwen3-30b-a3b"
     model_timeout: int = 600  # Increased to 10 minutes for long responses
     streaming_timeout: int = 900  # 15 minutes for streaming responses
     
+    # Legacy support
+    llm_endpoints: Optional[str] = None
+    default_model: Optional[str] = None
+    
+    @property
+    def llm_services_list(self) -> List[Dict[str, str]]:
+        """Parse LLM services configuration"""
+        services = []
+        if self.llm_services:
+            for service in self.llm_services.split(","):
+                parts = service.strip().split("|")
+                if len(parts) == 4:
+                    services.append({
+                        "name": parts[0],
+                        "type": parts[1],
+                        "url": parts[2],
+                        "default_model": parts[3]
+                    })
+        return services
+    
+    @property
+    def default_service_info(self) -> Dict[str, str]:
+        """Parse default LLM service configuration"""
+        if self.default_llm_service:
+            parts = self.default_llm_service.split("|")
+            if len(parts) == 2:
+                return {
+                    "service_name": parts[0],
+                    "model_name": parts[1]
+                }
+        return {"service_name": None, "model_name": None}
+    
     @property
     def llm_endpoints_list(self) -> List[str]:
-        if isinstance(self.llm_endpoints, str):
-            return [ep.strip() for ep in self.llm_endpoints.split(",")]
-        return self.llm_endpoints
+        """Legacy support - convert services to endpoints list"""
+        if self.llm_endpoints:
+            # Use legacy endpoints if provided
+            if isinstance(self.llm_endpoints, str):
+                return [ep.strip() for ep in self.llm_endpoints.split(",")]
+            return self.llm_endpoints
+        # Convert services to endpoints
+        return [service["url"] for service in self.llm_services_list]
     
     @property
     def cors_origins_list(self) -> List[str]:
